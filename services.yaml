@@ -1,0 +1,18 @@
+# services.yaml
+
+config:
+  timeout: 4000
+
+vars:
+  host: http://dummy.restapiexample.com/api/v1
+
+services:
+
+  employee:
+    url: ${host}/employee/24863
+    successCode: 200
+    timeout: 2000
+    method: GET
+    
+  employees:
+    url: ${host}/employees
