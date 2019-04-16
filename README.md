@@ -3,13 +3,13 @@ HTTP Service Health Checker.
 
 Simple health checker tool. Based on provided Yaml file health-checker executes all requests and exits with 0 if all request succeded or 1 if there was an error. 
 
+### Installation (globally)
+
+`npm i @plavc/health-checker -g`
+
 ### How to run
 
-`service-checker.exe services.yaml`
-
-or with node
-
-`node dist/index.js services.yaml`
+`pl-health-checker services.yaml`
 
 ### Example of input YAML file:
 
