@@ -6,4 +6,4 @@ COPY package*.json dist/*.js ./
 
 RUN npm ci --only=production
 
-CMD [ "node", "cli.js" ]
+CMD [ "node", "cli.js", "/opt/health-checker/config.yaml" ]

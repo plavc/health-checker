@@ -11,6 +11,16 @@ Simple health checker tool. Based on provided Yaml file health-checker executes 
 
 `pl-health-checker services.yaml`
 
+### Docker
+
+Pull image
+
+`docker pull plavchub/health-checker`
+
+Run docker container
+
+`docker run -it --rm -v ${pwd}/services.yaml:/opt/health-checker/config.yaml plavchub/health-checker`
+
 ### Example of input YAML file:
 
 ```

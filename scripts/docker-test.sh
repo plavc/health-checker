@@ -1,0 +1,1 @@
+docker run -it --rm -v ${pwd}/services.yaml:/opt/health-checker/config.yaml plavchub/health-checker:latest
