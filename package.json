@@ -1,6 +1,6 @@
 {
   "name": "@plavc/health-checker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Http Service Health Checker.",
   "main": "dist/cli.js",
   "bin": "dist/cli.js",
