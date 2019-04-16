@@ -3,7 +3,9 @@
   "version": "1.0.2",
   "description": "Http Service Health Checker.",
   "main": "dist/cli.js",
-  "bin": "dist/cli.js",
+  "bin": {
+    "pl-health-checker": "dist/cli.js"
+  },
   "private": false,
   "repository": {
     "type": "git",
