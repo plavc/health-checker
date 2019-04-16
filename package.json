@@ -29,13 +29,13 @@
     "test": "node_modules/ts-node/dist/bin.js test/index.ts"
   },
   "devDependencies": {
+    "typescript": "^3.0.3",
     "@types/node": "^11.13.4",
     "@types/yaml": "^1.0.2",
     "ts-lint": "^4.5.1"
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "typescript": "^3.0.3",
     "yaml": "^1.5.0"
   }
 }
