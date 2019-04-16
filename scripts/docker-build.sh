@@ -1,0 +1,1 @@
+docker build --tag plavchub/health-checker:1.0.3 .
