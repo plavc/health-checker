@@ -1,18 +1,12 @@
+#!/usr/bin/env node
 
-import { ServiceInfoReader } from "./service-info-reader";
 import { HealthChecker } from "./health-checker";
 
-class Startup {
+class Cli {
     
     public static main() {
 
-        const importer = new ServiceInfoReader();
-        
-        const context = importer.read(this.getYamlFileName());
-
-        const healthChecker = new HealthChecker(context);
-
-        healthChecker.check().then(() => {
+        HealthChecker.load(this.getYamlFileName()).check().then((context) => {
             process.exitCode = context.healthy ? 0 : 1;
         });
     }
@@ -27,4 +21,4 @@ class Startup {
     }
 }
 
-Startup.main();
+Cli.main();

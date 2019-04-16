@@ -1,8 +1,10 @@
 {
-  "name": "health-checker",
+  "name": "@plavc/health-checker",
   "version": "1.0.0",
   "description": "Http Service Health Checker.",
-  "main": "dist/index.js",
+  "main": "dist/cli.js",
+  "bin": "dist/cli.js",
+  "private": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plavc/health-checker.git"
@@ -14,7 +16,7 @@
     "docker",
     "container"
   ],
-  "author": "gregor@plavcak.net",
+  "author": "Gregor Plavčak <gregor@plavcak.net>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/plavc/health-checker/issues"
@@ -22,6 +24,7 @@
   "homepage": "https://github.com/plavc/health-checker#readme",
   "scripts": {
     "build": "tsc -w",
+    "build-prod": "tsc -d",
     "start": "node dist/index.js",
     "test": "node_modules/ts-node/dist/bin.js test/index.ts"
   },

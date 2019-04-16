@@ -7,12 +7,19 @@ import * as https from 'https';
 import { HealthCheckerContext } from "./health-checker-context";
 import { ServiceHealth } from "./service-health";
 import { Logger } from "./logger";
+import { ServiceInfoReader } from "./service-info-reader";
 
 export class HealthChecker {
 
+    static load(fileName: string) {
+        const importer = new ServiceInfoReader();
+        const context = importer.read(fileName);
+        return new HealthChecker(context);
+    }
+
     constructor(public readonly context: HealthCheckerContext) { }
 
-    public async check(): Promise<any> {
+    public async check(): Promise<HealthCheckerContext> {
 
         Logger.info('Start checking services (' + this.context.services.length + ').\n');
 
@@ -42,11 +49,13 @@ export class HealthChecker {
         Logger.info('');
         Logger.info('Services (' + this.context.services.length + ') have been checked.');
         if(unhealthy === 0) {
-            Logger.info('All services are healthy');
+            Logger.info('All services are healthy.');
         } else {
-            Logger.info('Healthy services: ' + healthy);
-            Logger.info('Unhealthy services: ' + unhealthy);
+            Logger.info('Healthy services: ' + healthy + '.');
+            Logger.info('Unhealthy services: ' + unhealthy + '.');
         }
+
+        return this.context;
     }
 
     public async checkService(serviceInfo: ServiceInfo): Promise<any> {
@@ -86,10 +95,10 @@ export class HealthChecker {
             res ? res.status:undefined, 
             res);
         
-            if (err) {
-                Logger.error(':( [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url + ' ' + err.message);
-            } else {
-                Logger.info('OK [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url);
-            }
+        if (err) {
+            Logger.error(':( [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url + ' ' + err.message);
+        } else {
+            Logger.info('OK [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url);
+        }
     }
 }
