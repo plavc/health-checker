@@ -66,3 +66,5 @@ typings/
 services.yaml
 Dockerfile
 .dockerignore
+
+scripts
