@@ -1,13 +1,13 @@
-import { ServiceInfo } from "./service-info";
+import { ServiceInfo } from "./model/service-info";
 
 import axios from 'axios';
-import * as http from 'http';
-import * as https from 'https';
 
-import { HealthCheckerContext } from "./health-checker-context";
-import { ServiceHealth } from "./service-health";
-import { Logger } from "./logger";
-import { ServiceInfoReader } from "./service-info-reader";
+import { HCContext } from "./model/hc-context";
+import { ServiceInfoHealth } from "./model/service-info-health";
+import { Logger } from "./services/logger";
+import { ServiceInfoReader } from "./services/service-info-reader";
+import { HCVariablesProvider } from "./services/hc-variables-provider";
+import { HCReport } from "./model/hc-report";
 
 export class HealthChecker {
 
@@ -17,24 +17,35 @@ export class HealthChecker {
         return new HealthChecker(context);
     }
 
-    constructor(public readonly context: HealthCheckerContext) { }
+    private varProvider: HCVariablesProvider;
 
-    public async check(): Promise<HealthCheckerContext> {
+    constructor(public readonly context: HCContext) {
+        this.varProvider = new HCVariablesProvider(context.config);
+     }
 
-        Logger.info('Start checking services (' + this.context.services.length + ').\n');
+    public async check(): Promise<HCContext> {
+
+        Logger.info('Start checking services (' + this.context.config.servicesCount + ').\n');
 
         let requests: Array<Promise<any>> = [];
 
-        this.context.services.forEach(serviceInfo => {
+        this.context.config.services.forEach(serviceInfo => {
             requests.push(this.checkService(serviceInfo));
         });
 
         await Promise.all(requests);
 
+        this.prepareReport(this.context);
+        this.printReport(this.context.report);
+
+        return this.context;
+    }
+
+    private prepareReport(context: HCContext) {
         let healthy = 0;
         let unhealthy = 0;
 
-        this.context.services.forEach(serviceInfo => {
+        context.config.services.forEach(serviceInfo => {
             if (serviceInfo.state && !serviceInfo.state.healthy) {
                 unhealthy += 1;
             } else if (serviceInfo.state && serviceInfo.state.healthy) {
@@ -44,56 +55,51 @@ export class HealthChecker {
             }
         });
 
-        this.context.healthy = unhealthy === 0;
+        context.report.countAll = context.config.servicesCount;
+        context.report.allHealthy = unhealthy === 0;
+        context.report.countFailed = unhealthy;
+        context.report.countSuccessful = healthy;
+    }
 
+    private printReport(report: HCReport) {
         Logger.info('');
-        Logger.info('Services (' + this.context.services.length + ') have been checked.');
-        if(unhealthy === 0) {
-            Logger.info('All services are healthy.');
+        Logger.info('Services (' + report.countAll + ') have been checked.');
+        if(report.allHealthy) {
+            Logger.info('All services are healthy.', true);
         } else {
-            Logger.info('Healthy services: ' + healthy + '.');
-            Logger.info('Unhealthy services: ' + unhealthy + '.');
+            Logger.info('Healthy services: ' + report.countSuccessful + '.', true);
+            Logger.info('Unhealthy services: ' + report.countFailed + '.', true);
         }
-
-        return this.context;
     }
 
     public async checkService(serviceInfo: ServiceInfo): Promise<any> {
 
-        const url = this.normalizeUrl(serviceInfo.url);
+        serviceInfo.renderedUrl = this.varProvider.substitute(serviceInfo.url);
+
+        const hrstart = process.hrtime.bigint();
 
         try {
             const response = await axios.request({
                 method: serviceInfo.method,
-                url: url,
+                url: serviceInfo.renderedUrl,
                 responseType: 'json',
-                timeout: serviceInfo.timeout,
-                httpAgent: new http.Agent({ keepAlive: false, timeout: 1000 }),
-                httpsAgent: new https.Agent({ keepAlive: false })
+                timeout: serviceInfo.timeout
             });
 
-            this.updateState(serviceInfo, undefined, response, url);
+            this.updateState(serviceInfo, undefined, response, serviceInfo.renderedUrl, process.hrtime.bigint() - hrstart);
 
         } catch(e) {
-            this.updateState(serviceInfo, e, e.response, url);
+            this.updateState(serviceInfo, e, e.response, serviceInfo.renderedUrl, process.hrtime.bigint() - hrstart);
         }
     }
 
-    private normalizeUrl(rawUrl: string): string {
-
-        this.context.variables.forEach((val, key) => {
-            rawUrl = rawUrl.replace('${' + key + '}', val);
-        });
-
-        return rawUrl;
-    }
-
-    private updateState(serviceInfo: ServiceInfo, err: any, response: any, url: string) {
+    private updateState(serviceInfo: ServiceInfo, err: any, response: any, url: string, responseTime: bigint) {
         const res: any = response;
-        serviceInfo.state = new ServiceHealth(
+        serviceInfo.state = new ServiceInfoHealth(
             res ? (res.status === serviceInfo.successStatus) : false, 
             res ? res.status:undefined, 
-            res);
+            res,
+            responseTime);
         
         if (err) {
             Logger.error(':( [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url + ' ' + err.message);
@@ -101,4 +107,5 @@ export class HealthChecker {
             Logger.info('OK [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url);
         }
     }
+
 }

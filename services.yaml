@@ -15,4 +15,16 @@ services:
     method: GET
     
   employees:
+    url: ${host}/employees00
+  
+  employees-2:
+    url: ${host}/employees
+
+  employees-3:
+    url: ${host}/employees
+
+  employees-4:
+    url: ${host}/employees66
+
+  employees-5:
     url: ${host}/employees
