@@ -4,28 +4,28 @@ import axios from 'axios';
 
 import { HCContext } from "./model/hc-context";
 import { ServiceInfoHealth } from "./model/service-info-health";
-import { Logger } from "./services/logger";
-import { ServiceInfoReader } from "./services/service-info-reader";
-import { HCVariablesProvider } from "./services/hc-variables-provider";
+import { HCLogger } from "./services/hc-logger";
+import { HCYamlSerializable } from "./services/hc-yaml-serializer";
+import { HCVarsProvider } from "./services/hc-vars-provider";
 import { HCReport } from "./model/hc-report";
 
 export class HealthChecker {
 
     static load(fileName: string) {
-        const importer = new ServiceInfoReader();
+        const importer = new HCYamlSerializable();
         const context = importer.read(fileName);
         return new HealthChecker(context);
     }
 
-    private varProvider: HCVariablesProvider;
+    private varProvider: HCVarsProvider;
 
     constructor(public readonly context: HCContext) {
-        this.varProvider = new HCVariablesProvider(context.config);
+        this.varProvider = new HCVarsProvider(context.config);
      }
 
     public async check(): Promise<HCContext> {
 
-        Logger.info('Start checking services (' + this.context.config.servicesCount + ').\n');
+        HCLogger.info('Start checking services (' + this.context.config.servicesCount + ').\n');
 
         let requests: Array<Promise<any>> = [];
 
@@ -62,13 +62,13 @@ export class HealthChecker {
     }
 
     private printReport(report: HCReport) {
-        Logger.info('');
-        Logger.info('Services (' + report.countAll + ') have been checked.');
+        HCLogger.info('');
+        HCLogger.info('Services (' + report.countAll + ') have been checked.');
         if(report.allHealthy) {
-            Logger.info('All services are healthy.', true);
+            HCLogger.info('All services are healthy.', true);
         } else {
-            Logger.info('Healthy services: ' + report.countSuccessful + '.', true);
-            Logger.info('Unhealthy services: ' + report.countFailed + '.', true);
+            HCLogger.info('Healthy services: ' + report.countSuccessful + '.', true);
+            HCLogger.info('Unhealthy services: ' + report.countFailed + '.', true);
         }
     }
 
@@ -102,9 +102,9 @@ export class HealthChecker {
             responseTime);
         
         if (err) {
-            Logger.error(':( [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url + ' ' + err.message);
+            HCLogger.error(':( [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url + ' ' + err.message);
         } else {
-            Logger.info('OK [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url);
+            HCLogger.info('OK [' + serviceInfo.method +'] Exp: ' + serviceInfo.successStatus + ' | ' + url);
         }
     }
 

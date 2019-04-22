@@ -1,5 +1,5 @@
 
-export class Logger {
+export class HCLogger {
 
     public static trace = false;
 
@@ -10,5 +10,4 @@ export class Logger {
     static error(message?: any, force = false) {
         if (this.trace || force) console.error(message);
     }
-
 }

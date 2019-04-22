@@ -4,7 +4,7 @@ import { HCContext } from '../model/hc-context';
 import { ServiceInfo } from '../model/service-info';
 import { HCConfig } from '../model/hc-config';
 
-export class ServiceInfoReader {
+export class HCYamlSerializable {
 
     static supportedMethods = [ 'GET', 'POST', 'PATCH', 'PUT', 'HEAD', 'OPTIONS' ];
 
@@ -22,6 +22,22 @@ export class ServiceInfoReader {
         if (obj.config) {
             if (obj.config.timeout) {
                 config.globalTimeout = obj.config.timeout;
+            }
+
+            if (obj.config.slack) {
+                config.slack.enabled = obj.config.slack.enabled;
+                config.slack.healthy = obj.config.slack.healthy;
+                config.slack.webhook = obj.config.slack.webhook;
+                config.slack.fullReport = obj.config.slack.fullReport;
+            }
+
+            if (obj.config.mail) {
+                config.mail.enabled = obj.config.mail.enabled;
+                config.mail.healthy = obj.config.mail.healthy;
+                config.mail.sender = obj.config.mail.sender;
+                config.mail.server = obj.config.mail.server;
+                config.mail.recipients = obj.config.mail.recipients;
+                config.mail.fullReport = obj.config.mail.fullReport;
             }
         }
 
@@ -42,7 +58,7 @@ export class ServiceInfoReader {
 
     private parseServiceInfo(raw: any, defaultTimeout: number, serviceName: string): ServiceInfo {
         
-        const method = ServiceInfoReader.supportedMethods.find(item => item.toUpperCase() === raw.method) || 'GET';
+        const method = HCYamlSerializable.supportedMethods.find(item => item.toUpperCase() === raw.method) || 'GET';
 
         if (method === undefined || method === null) {
             throw new Error('Invalid HTTP method: ' + method);

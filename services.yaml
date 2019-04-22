@@ -1,30 +1,39 @@
 # services.yaml
 
 config:
-  timeout: 4000
+  timeout: 4000                 # http request timeout for all services (can be overriden for each service separtely)
 
-vars:
+  slack:                        # slack notifications config
+    enabled: true               # enable or disable slack notifications
+    healthy: true               # if true notification will be sent if all services are healthy, otherwise not
+    fullReport: true            # if true, slack message will include reports for all services instead of overall status
+                                # Slack webhook url
+    webhook: https://hooks.slack.com/services/...
+
+  mail:
+    enabled: true               # enable or disable email notification
+    healthy: false              # if true notification will be sent if all services are healthy, otherwise not
+    sender: test@health-checker.local    # sender of email
+    recipients:                 # list of recepient emails
+      - admin@health-checker.local
+    server:                     # mail server settings, see 'nodemailer'
+      host: 127.0.0.1
+      port: 25
+      secure: false
+      auth:
+        user: test@health-checker.local
+        pass: test
+
+vars:                           # custom variables that can be used in services
   host: http://dummy.restapiexample.com/api/v1
 
-services:
+services:                       # services
 
   employee:
-    url: ${host}/employee/24863
-    successCode: 200
-    timeout: 2000
-    method: GET
+    url: ${host}/employee/24863 # http request url to invoke
+    successCode: 200            # http response status code for healthy service, default 200
+    timeout: 2000               # http request timeout, if not specified timeout from config is used
+    method: GET                 # http request method, default GET
     
   employees:
-    url: ${host}/employees00
-  
-  employees-2:
-    url: ${host}/employees
-
-  employees-3:
-    url: ${host}/employees
-
-  employees-4:
-    url: ${host}/employees66
-
-  employees-5:
     url: ${host}/employees

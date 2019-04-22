@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
+import * as fs from "fs";
+import * as path from "path";
+
 import { HealthChecker } from './health-checker';
 import { HCHtmlReporter } from './reporter/hc-html-reporter';
 import { HCJunitReporter } from './reporter/hc-junit-reporter';
 import { HCJsonReporter } from './reporter/hc-json-reporter';
-import * as fs from "fs";
-import * as path from "path";
-import { Logger } from './services/logger';
+import { HCLogger } from './services/hc-logger';
+import { HCMailNotifier } from './services/hc-mail-notifier';
+import { HCSlackNotifier } from './services/hc-slack-notifier';
+import { HCConfig } from './model/hc-config';
 
 class Cli {
 
@@ -27,6 +31,7 @@ class Cli {
             .option('-H, --html [outDir]', 'outputs html report, default: hc-report.html')
             .option('-U, --junit [outDir]', 'outputs junit report, default: hc-report.junit.xml')
             .option('-t, --trace', 'print report to standard output')
+            .option('-p, --param <name>=<value>', 'set variable from cli, has top most priorty', this.param, {})
             .action((configFile, cmd) => this.action(configFile, this))
             .parse(process.argv);
 
@@ -35,34 +40,55 @@ class Cli {
         }
     }
 
+    private param(val: any, memo: any) {
+        const parama = val.split('=');
+        memo[parama[0]] = parama[1];
+        return memo;
+    }
+
     private action(configFile: string, instance: Cli) {
         instance.configFile = configFile;
 
-        Logger.trace = program.trace || false;
+        HCLogger.trace = program.trace || false;
         instance.reportJson = this.getReportPath(program.json, './hc-report.json');
         instance.reportHtml = this.getReportPath(program.html, './hc-report.html');
         instance.reportJunit = this.getReportPath(program.junit, './hc-report.junit.xml');
 
         if(instance.configFile !== null && instance.configFile !== undefined) {
-            HealthChecker.load(instance.configFile).check().then((context) => {
+            const healthChecker = HealthChecker.load(instance.configFile);
+            instance.handleParams(program, healthChecker.context.config);
+
+            healthChecker.check().then((context) => {
+
+                new HCMailNotifier().notify(context);
+
+                new HCSlackNotifier().notify(context);
 
                 if (instance.reportHtml) {
-                    Logger.info('Creating html report: ' + instance.reportHtml);
+                    HCLogger.info('Creating html report: ' + instance.reportHtml);
                     new HCHtmlReporter().render(context, this.createFolder(instance.reportHtml));
                 }
 
                 if (instance.reportJson) {
-                    Logger.info('Creating json report: ' + instance.reportJson);
-                    new HCJunitReporter().render(context, this.createFolder(instance.reportJson));
+                    HCLogger.info('Creating json report: ' + instance.reportJson);
+                    new HCJsonReporter().render(context, this.createFolder(instance.reportJson));
                 }
 
                 if (instance.reportJunit) {
-                    Logger.info('Creating junit report: ' + instance.reportJunit);
-                    new HCJsonReporter().render(context, this.createFolder(instance.reportJunit));
+                    HCLogger.info('Creating junit report: ' + instance.reportJunit);
+                    new HCJunitReporter().render(context, this.createFolder(instance.reportJunit));
                 }
       
                 process.exitCode = context.report.allHealthy ? 0 : 1;
             });
+        }
+    }
+
+    private handleParams(program: any, config: HCConfig) {
+        if(program.param) {
+            Object.keys(program.param).forEach(p => {
+                config.variables.set(p, program.param[p]);
+            })
         }
     }
 
@@ -93,43 +119,3 @@ class Cli {
 }
 
 new Cli().run();
-
-
-/*
-import { HealthChecker } from "./health-checker";
-import { HCHtmlReporter } from "./reporter/hc-html-reporter";
-import { HCJunitReporter } from "./reporter/hc-junit-reporter";
-import { HCJsonReporter } from "./reporter/hc-json-reporter";
-import { HCContext } from './model/hc-context';
-
-class Cli {
-    
-    public static main() {
-
-        HealthChecker.load(this.getYamlFileName()).check().then((context) => {
-
-            const reporter = new HCHtmlReporter();
-            reporter.render(context, './src/templates/report.template.html', './out-report.html');
-
-            const junitReporter = new HCJunitReporter();
-            junitReporter.render(context, './out-report.xml');
-
-            const jsonReporter = new HCJsonReporter();
-            jsonReporter.render(context, './out-report.json');
-
-            process.exitCode = context.report.allHealthy ? 0 : 1;
-        });
-    }
-
-    private static getYamlFileName(): string {
-        const args: string[] = process.argv.slice(2);
-        if (args.length === 0) {
-            throw new Error('Configuration file not provided.')
-        }
-
-        return args[0];
-    }
-}
-
-Cli.main();
-*/

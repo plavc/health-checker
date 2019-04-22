@@ -62,3 +62,8 @@ typings/
 
 dist
 **/*.exe
+
+test.yaml
+hc-report.html
+hc-report.json
+hc-report.junit.xml

@@ -1,8 +1,8 @@
 
-import { Logger } from "./logger";
+import { HCLogger } from "./hc-logger";
 import { HCConfig } from "../model/hc-config";
 
-export class HCVariablesProvider {
+export class HCVarsProvider {
 
     constructor(private config: HCConfig) { }
 
@@ -24,7 +24,7 @@ export class HCVariablesProvider {
             if (value) {
                 source = source.replace('${' + variable + '}', value);
             } else {
-                Logger.error('Cannot substitute variable: ' + variable);
+                HCLogger.error('Cannot substitute variable: ' + variable);
             }
         });
     
@@ -48,7 +48,7 @@ export class HCVariablesProvider {
         let varEnd = source.indexOf('}', varStart);
 
         if (varEnd === -1) {
-            Logger.error('Invalid parametrized string: ' + source);
+            HCLogger.error('Invalid parametrized string: ' + source);
         }
 
     	vars.push(source.substring(varStart, varEnd));
